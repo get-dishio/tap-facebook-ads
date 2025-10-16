@@ -1,4 +1,5 @@
 version: 1
+default_environment: dev
 send_anonymous_usage_stats: true
 project_id: tap-facebook
 plugins:
@@ -10,16 +11,20 @@ plugins:
     - state
     - catalog
     - discover
-    config:
-      start_date: '2010-01-01T00:00:00Z'
     settings:
-    # TODO: To configure using Meltano, declare settings and their types here:
-    - name: username
-    - name: password
+    - name: access_token
       kind: password
     - name: start_date
-      value: '2010-01-01T00:00:00Z'
-  loaders:
-  - name: target-jsonl
-    variant: andyh1203
-    pip_url: target-jsonl
+      value: '2023-03-01T00:00:00Z'
+      kind: date_iso8601
+    - name: end_date
+      value: '2023-03-31T00:00:00Z'
+      kind: date_iso8601
+    - name: locations
+      kind: array
+    - name: api_version
+      value: 'v16.0'
+    config:
+      insights_buffer_days: 7
+environments:
+- name: dev

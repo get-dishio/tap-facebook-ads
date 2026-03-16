@@ -50,7 +50,7 @@ class AdsStream(IncrementalFacebookStream):
     name = "ads"
     filter_entity = "ad"
 
-    path = f"/ads?fields={columns}"
+    path = "/ads?fields=" + ",".join(columns)
 
     primary_keys = ["id", "updated_time"]  # noqa: RUF012
     replication_method = REPLICATION_INCREMENTAL

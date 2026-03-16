@@ -48,7 +48,7 @@ class AdImages(AccountLevelStream):
     ]
 
     name = "adimages"
-    path = f"/adimages?fields={columns}"
+    path = "/adimages?fields=" + ",".join(columns)
     tap_stream_id = "images"
     replication_method = REPLICATION_INCREMENTAL
     replication_key = "id"

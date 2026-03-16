@@ -26,7 +26,7 @@ class AdLabelsStream(AccountLevelStream):
     columns = ["id", "account", "created_time", "updated_time", "name"]  # noqa: RUF012
 
     name = "adlabels"
-    path = f"/adlabels?fields={columns}"
+    path = "/adlabels?fields=" + ",".join(columns)
     primary_keys = ["id", "updated_time"]  # noqa: RUF012
     tap_stream_id = "adlabels"
     replication_method = REPLICATION_INCREMENTAL

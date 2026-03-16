@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Removed duplicate `daily_budget` property in CampaignStream schema
 - Removed duplicate `geo_locations` property in AdsetsStream targeting schema
 - Fixed `selected == False` identity comparison to `not self.selected` in AdAccountsStream
+- **BUG**: Fixed fields serialization across all streams — was sending Python list repr `"['field1', ...]"` instead of comma-separated `"field1,field2"` to the API
+- Removed 5 fields from CreativeStream that were removed in API v25: `effective_instagram_story_id`, `instagram_story_id`, `instagram_actor_id`, `page_link`, `page_message`
+- Replaced `instagram_actor_id` with `instagram_user_id` in CreativeStream (v22+ migration)
 
 ### Changed
 - **BREAKING**: Upgraded Facebook Marketing API from v21 to v25

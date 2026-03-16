@@ -254,7 +254,7 @@ class AdAccountsStream(FacebookStream):
         if next_page_token is not None:
             params["after"] = next_page_token
         
-        params["fields"] = f"{self.columns}"
+        params["fields"] = ",".join(self.columns)
         
         return params
 

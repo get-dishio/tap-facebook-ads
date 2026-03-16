@@ -34,7 +34,7 @@ class CustomAudiences(AccountLevelStream):
 
     @property
     def path(self) -> str:
-        return f"/customaudiences?fields={self.columns}"
+        return "/customaudiences?fields=" + ",".join(self.columns)
 
     @property
     def columns(self) -> list[str]:

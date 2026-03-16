@@ -7,7 +7,6 @@ import typing as t
 from http import HTTPStatus
 from urllib.parse import urlparse
 
-import pendulum
 from singer_sdk.authenticators import BearerTokenAuthenticator
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.helpers.jsonpath import extract_jsonpath

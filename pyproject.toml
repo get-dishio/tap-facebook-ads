@@ -22,6 +22,7 @@ facebook-business = "^25.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=9.0.0"
+ruff = ">=0.8.0"
 singer-sdk = {version = ">=0.53,<0.54", extras = ["testing"]}
 
 [tool.isort]

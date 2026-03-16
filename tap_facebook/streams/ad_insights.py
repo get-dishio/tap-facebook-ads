@@ -177,9 +177,9 @@ class AdsInsightStream(Stream):
             else:
                 self.logger.info("No data found for the specified date range")
                 return None
-        except Exception as e:
-            self.logger.error(f"Error fetching earliest record date: {e}")
-            raise e
+        except Exception:
+            self.logger.exception("Error fetching earliest record date")
+            raise
 
 
 
@@ -382,8 +382,9 @@ class AdsInsightStream(Stream):
                         response = self._execute_single_request_with_retries(api, batch_request)
                         data = json.loads(response["body"])
                     else:
-                        self.logger.warning(f"Batch request failed and will be skipped: {response}")
-                        data = {}
+                        msg = f"Batch request failed with non-retryable error: {response}"
+                        self.logger.error(msg)
+                        raise RuntimeError(msg)
                 if data.get("data") and len(data["data"]) > 0:
                     self.logger.info(
                         "%s records fetched for %s",
@@ -427,8 +428,9 @@ class AdsInsightStream(Stream):
                 self.config["api_version"] +
                 '/act_' +
                 account_id +
-                '/insights?access_token=' +
-                self.config["access_token"]
+                '/insights',
+                headers={"Authorization": f"Bearer {self.config['access_token']}"},
+                timeout=30,
             )
 
             # Check if the request was successful

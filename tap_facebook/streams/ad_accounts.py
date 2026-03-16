@@ -230,7 +230,7 @@ class AdAccountsStream(FacebookStream):
         return row
 
     def get_records(self, context):
-        if self.selected == False and self.configured_location_ids:
+        if not self.selected and self.configured_location_ids:
             for account_id in self.configured_location_ids:
                 yield {"account_id": account_id}
         else:

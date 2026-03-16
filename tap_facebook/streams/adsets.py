@@ -220,13 +220,6 @@ class AdsetsStream(IncrementalFacebookStream):
                         ),
                     ),
                 ),
-                Property(
-                    "geo_locations",
-                    ObjectType(
-                        Property("countries", ArrayType(StringType)),
-                        Property("location_types", ArrayType(StringType)),
-                    ),
-                ),
                 Property("genders", ArrayType(IntegerType)),
                 Property("brand_safety_content_filter_levels", ArrayType(StringType)),
                 Property("publisher_platforms", ArrayType(StringType)),

@@ -7,9 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased] - 2026-03-16
 
 ### Fixed
+- **SECURITY**: Moved access_token from URL query string to Authorization header in rate limit check
+- Non-retryable batch failures now raise `RuntimeError` instead of silently dropping data
 - Non-rate-limit 4xx errors now raise `FatalAPIError` instead of silently skipping (supports HotGlue auto-rollback on failure)
 - Added `sort=asc` and `order_by` params to incremental streams for reliable bookmark ordering
 - Declared `access_token` as required config property in `config_jsonschema` (was used but not declared)
+- Made `start_date` a required config property (was optional but used unconditionally in insights)
+- Fixed bare `raise e` to `raise` in `_get_earliest_record_date` to preserve tracebacks
+- Added 30-second timeout to rate limit check HTTP request
+- Removed duplicate `daily_budget` property in CampaignStream schema
+- Removed duplicate `geo_locations` property in AdsetsStream targeting schema
+- Fixed `selected == False` identity comparison to `not self.selected` in AdAccountsStream
 
 ### Changed
 - **BREAKING**: Upgraded Facebook Marketing API from v21 to v25

@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **BUG**: Fixed fields serialization across all streams — was sending Python list repr `"['field1', ...]"` instead of comma-separated `"field1,field2"` to the API
 - Removed 5 fields from CreativeStream that were removed in API v25: `effective_instagram_story_id`, `instagram_story_id`, `instagram_actor_id`, `page_link`, `page_message`
 - Replaced `instagram_actor_id` with `instagram_user_id` in CreativeStream (v22+ migration)
+- Split CI into lint (runs on PRs) and integration-test (workflow_dispatch only) jobs
+- Tests no longer crash when API credentials are missing — integration tests skip gracefully
+- Added unit tests for stream discovery, default API version, and optional start_date
 
 ### Changed
 - **BREAKING**: Upgraded Facebook Marketing API from v21 to v25

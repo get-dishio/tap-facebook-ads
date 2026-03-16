@@ -185,8 +185,7 @@ class TapFacebook(Tap):
         th.Property(
             "start_date",
             th.DateTimeType,
-            required=True,
-            description="The earliest record date to sync",
+            description="The earliest record date to sync. If omitted, syncs from the oldest available data (up to 37 months).",
         ),
         th.Property(
             "end_date",

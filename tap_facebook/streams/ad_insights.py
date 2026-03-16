@@ -153,7 +153,11 @@ class AdsInsightStream(Stream):
         Make a single Insights API call using sort to determine the oldest date with data.
         Returns None if no data exists. Will retry on 500 errors and other transient failures.
         """
-        config_start_date = pendulum.parse(self.config["start_date"]).date()
+        config_start_date = (
+            pendulum.parse(self.config["start_date"]).date()
+            if self.config.get("start_date")
+            else self.oldest_allowed_start_date
+        )
         start_date = max(config_start_date, self.oldest_allowed_start_date)
         
         params = {
@@ -189,7 +193,11 @@ class AdsInsightStream(Stream):
     ) -> pendulum.Date:
         lookback_window = self._report_definition["lookback_window"]
 
-        config_start_date = pendulum.parse(self.config["start_date"]).date()
+        config_start_date = (
+            pendulum.parse(self.config["start_date"]).date()
+            if self.config.get("start_date")
+            else self.oldest_allowed_start_date
+        )
         incremental_start_date = pendulum.parse(
             self.get_starting_replication_key_value(context),
         ).date()

@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Non-rate-limit 4xx errors now raise `FatalAPIError` instead of silently skipping (supports HotGlue auto-rollback on failure)
 - Added `sort=asc` and `order_by` params to incremental streams for reliable bookmark ordering
 - Declared `access_token` as required config property in `config_jsonschema` (was used but not declared)
-- Made `start_date` a required config property (was optional but used unconditionally in insights)
+- `start_date` now falls back to oldest allowed date (37 months) when omitted, instead of crashing
 - Fixed bare `raise e` to `raise` in `_get_earliest_record_date` to preserve tracebacks
 - Added 30-second timeout to rate limit check HTTP request
 - Removed duplicate `daily_budget` property in CampaignStream schema

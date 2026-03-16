@@ -4,7 +4,7 @@ All notable changes to `tap-facebook-ads` will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [Unreleased] - 2026-03-16
 
 ### Fixed
 - Non-rate-limit 4xx errors now raise `FatalAPIError` instead of silently skipping (supports HotGlue auto-rollback on failure)

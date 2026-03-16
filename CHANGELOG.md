@@ -39,3 +39,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `.claude/settings.json` with security best practices
 - `.claude/agents/tap-developer.md` agent for tap development
 - `.claude/skills/` with Meltano, Singer, and HotGlue skill definitions
+
+### CI
+- Bumped `actions/checkout` from 4.1.1 to 6.0.0
+- Bumped `actions/setup-python` from 5.1.0 to 6.0.0
+- Bumped `actions/download-artifact` from 4.1.1 to 6.0.0
+- Bumped `pypa/gh-action-pypi-publish` from 1.8.11 to 1.13.0
+- Bumped `nox` from 2023.4.22 to 2025.10.16 in CI constraints
+- Bumped `nox-poetry` from 1.0.3 to 1.2.0 in CI constraints
+- Bumped `pip` from 23.3.2 to 25.3 in CI constraints
+- Bumped `poetry` from 1.7.1 to 2.2.1 in CI constraints
+- Bumped `poetry-dynamic-versioning` from 1.2.0 to 1.9.1 in CI constraints
+- Updated Python test matrix from [3.9, 3.10, 3.11, 3.12] to [3.10, 3.11, 3.12, 3.13]

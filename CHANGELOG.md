@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Non-rate-limit 4xx errors now raise `FatalAPIError` instead of silently skipping (supports HotGlue auto-rollback on failure)
+- Added `sort=asc` and `order_by` params to incremental streams for reliable bookmark ordering
+- Declared `access_token` as required config property in `config_jsonschema` (was used but not declared)
+
 ### Changed
 - **BREAKING**: Upgraded Facebook Marketing API from v21 to v25
 - **BREAKING**: Minimum Python version raised from 3.8 to 3.10

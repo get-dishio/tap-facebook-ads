@@ -39,6 +39,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `.claude/settings.json` with security best practices
 - `.claude/agents/tap-developer.md` agent for tap development
 - `.claude/skills/` with Meltano, Singer, and HotGlue skill definitions
+- `.claude/agents/etl-reliability.md` agent for ETL reliability audits
+- `.claude/skills/etl-reliability.md` ETL reliability patterns and checklist
+- `.claude/skills/data-quality.md` data quality validation patterns
+- `pendulum` as explicit dependency (was implicit via older singer-sdk)
 
 ### CI
 - Bumped `actions/checkout` from 4.1.1 to 6.0.0

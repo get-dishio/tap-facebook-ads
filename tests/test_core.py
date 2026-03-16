@@ -3,6 +3,7 @@
 import os
 
 import pytest
+
 from tap_facebook.streams import AdAccountsStream
 from tap_facebook.tap import TapFacebook
 

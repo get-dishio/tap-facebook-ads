@@ -313,6 +313,23 @@ Common commands:
 - `poetry run tap-example --config config.json` -- run sync
 - `poetry run pytest` -- run tests
 - `poetry run ruff check .` -- lint
+- `poetry run ruff check . --fix` -- auto-fix lint issues
+- `poetry run ruff format .` -- format code
+
+### Pre-commit Hooks
+
+This project uses pre-commit hooks (`.pre-commit-config.yaml`) that run automatically on `git commit`:
+
+- **ruff** (`ruff check --fix --exit-non-zero-on-fix`) — auto-fixes lint issues and blocks commit if unfixable issues remain
+- **ruff-format** — auto-formats code
+- **check-json**, **check-toml**, **check-yaml** — validates config files
+- **end-of-file-fixer**, **trailing-whitespace** — whitespace cleanup
+- **check-dependabot**, **check-github-workflows** — validates CI config
+- **mypy** — type checking
+
+Install hooks locally: `pre-commit install`
+Run manually: `pre-commit run --all-files`
+Always run `poetry run ruff check . --fix` before committing to avoid hook failures
 
 ## Common Patterns in This Codebase
 

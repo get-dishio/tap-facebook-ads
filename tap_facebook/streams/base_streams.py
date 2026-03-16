@@ -1,8 +1,11 @@
-import typing as t
 import json
+import typing as t
+
 import pendulum
+
 from tap_facebook.client import FacebookStream
 from tap_facebook.streams import AdAccountsStream
+
 
 class AccountLevelStream(FacebookStream):
     """Account level stream class."""
@@ -16,7 +19,7 @@ class IncrementalFacebookStream(AccountLevelStream):
     def get_url_params(
         self,
         context: dict | None,
-        next_page_token: t.Any | None,  # noqa: ANN401
+        next_page_token: t.Any | None,
     ) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization.
 

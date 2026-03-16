@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import typing as t
 from http import HTTPStatus
 from urllib.parse import urlparse
@@ -47,8 +46,8 @@ class FacebookStream(RESTStream):
     def get_next_page_token(
         self,
         response: requests.Response,
-        previous_token: t.Any | None,  # noqa: ARG002, ANN401
-    ) -> t.Any | None:  # noqa: ANN401
+        previous_token: t.Any | None,
+    ) -> t.Any | None:
         """Return a token for identifying next page or None if no more pages.
 
         Args:
@@ -69,8 +68,8 @@ class FacebookStream(RESTStream):
 
     def get_url_params(
         self,
-        context: dict | None,  # noqa: ARG002
-        next_page_token: t.Any | None,  # noqa: ANN401
+        context: dict | None,
+        next_page_token: t.Any | None,
     ) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization.
 

@@ -99,8 +99,8 @@ class CustomAudiences(AccountLevelStream):
 
     def get_url_params(
         self,
-        context: dict | None,  # noqa: ARG002
-        next_page_token: t.Any | None,  # noqa: ANN401
+        context: dict | None,
+        next_page_token: t.Any | None,
     ) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization.
 

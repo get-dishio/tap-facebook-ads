@@ -70,7 +70,7 @@ class TapFacebook(Tap):
                 th.ObjectType(
                     th.Property("id", th.StringType, required=True),
                     th.Property("name", th.StringType, required=False),
-                )
+                ),
             ),
             description="List of location objects, each with an 'id' (required) and optional 'name'.",
             default=[],
@@ -117,7 +117,7 @@ class TapFacebook(Tap):
                             "How to break down the result. "
                             "For more than one breakdown, only certain combinations are available: "
                             "See 'Combining Breakdowns' in the "
-                            "[Breakdowns page](https://developers.facebook.com/docs/marketing-api/insights/breakdowns). "  # noqa: E501
+                            "[Breakdowns page](https://developers.facebook.com/docs/marketing-api/insights/breakdowns). "
                             "The option impression_device cannot be used by itself"
                         ),
                         default=[],
@@ -177,7 +177,7 @@ class TapFacebook(Tap):
             ),
             description=(
                 "A list of insight report definitions. See the "
-                "[Ad Insights docs](https://developers.facebook.com/docs/marketing-api/reference/adgroup/insights) "  # noqa: E501
+                "[Ad Insights docs](https://developers.facebook.com/docs/marketing-api/reference/adgroup/insights) "
                 "for more details."
             ),
             default=[],

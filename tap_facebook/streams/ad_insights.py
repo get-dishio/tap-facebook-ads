@@ -18,9 +18,8 @@ from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.api import FacebookAdsApi
 from singer_sdk import typing as th
 from singer_sdk.streams.core import REPLICATION_INCREMENTAL, Stream
+
 from tap_facebook.streams.base_streams import AdAccountsStream
-
-
 
 COLUMN_LIST = [
     "ad_id",
@@ -43,7 +42,7 @@ COLUMN_LIST = [
     "updated_time",
     "actions",
     "action_values",
-    "conversion_values"
+    "conversion_values",
 ]
 
 SLEEP_TIME_INCREMENT = 5
@@ -61,7 +60,7 @@ class AdsInsightStream(Stream):
     replication_key = "date_start"
     parent_stream_type = AdAccountsStream
 
-    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the stream."""
         self._report_definition = kwargs.pop("report_definition")
         kwargs["name"] = f"{self.name}_{self._report_definition['name']}"
@@ -111,7 +110,7 @@ class AdsInsightStream(Stream):
         raise RuntimeError(msg)
 
     @property
-    @lru_cache  # noqa: B019
+    @lru_cache
     def schema(self) -> dict:
         properties: th.List[th.Property] = []
         for field in COLUMN_LIST:
@@ -122,12 +121,11 @@ class AdsInsightStream(Stream):
 
     @property
     def oldest_allowed_start_date(self) -> pendulum.Date:
-        """
-        Facebook stores metrics for a maximum of 37 months. 
+        """Facebook stores metrics for a maximum of 37 months.
         Returns the oldest date that can be fetched from the API.
         """
         return pendulum.today().date().subtract(months=36)
-    
+
     def _initialize_client(self, account_id) -> None:
         FacebookAdsApi.init(
             access_token=self.config["access_token"],
@@ -149,13 +147,16 @@ class AdsInsightStream(Stream):
         return columns
 
     def _get_earliest_record_date(self, account_id: str, sync_end_date: pendulum.Date) -> pendulum.Date | None:
-        """
-        Make a single Insights API call using sort to determine the oldest date with data.
+        """Make a single Insights API call using sort to determine the oldest date with data.
         Returns None if no data exists. Will retry on 500 errors and other transient failures.
         """
-        config_start_date = pendulum.parse(self.config["start_date"]).date()
+        config_start_date = (
+            pendulum.parse(self.config["start_date"]).date()
+            if self.config.get("start_date")
+            else self.oldest_allowed_start_date
+        )
         start_date = max(config_start_date, self.oldest_allowed_start_date)
-        
+
         params = {
             "level": self._report_definition["level"],
             "fields": ["date_start", "ad_id", "impressions", "date_stop", "created_time"],
@@ -174,12 +175,11 @@ class AdsInsightStream(Stream):
                 earliest_date = pendulum.parse(data[0]["created_time"]).date()
                 self.logger.info(f"Earliest record found: {earliest_date}")
                 return earliest_date
-            else:
-                self.logger.info("No data found for the specified date range")
-                return None
-        except Exception as e:
-            self.logger.error(f"Error fetching earliest record date: {e}")
-            raise e
+            self.logger.info("No data found for the specified date range")
+            return None
+        except Exception:
+            self.logger.exception("Error fetching earliest record date")
+            raise
 
 
 
@@ -189,7 +189,11 @@ class AdsInsightStream(Stream):
     ) -> pendulum.Date:
         lookback_window = self._report_definition["lookback_window"]
 
-        config_start_date = pendulum.parse(self.config["start_date"]).date()
+        config_start_date = (
+            pendulum.parse(self.config["start_date"]).date()
+            if self.config.get("start_date")
+            else self.oldest_allowed_start_date
+        )
         incremental_start_date = pendulum.parse(
             self.get_starting_replication_key_value(context),
         ).date()
@@ -229,8 +233,7 @@ class AdsInsightStream(Stream):
         api: FacebookAdsApi,
         batch_request: dict,
     ) -> dict:
-        """
-        Execute a single batch request (wrapped in a list) with retry logic.
+        """Execute a single batch request (wrapped in a list) with retry logic.
         Retries individual requests in case of transient errors (like rate limiting or 500 errors).
         """
         attempt = 0
@@ -241,7 +244,7 @@ class AdsInsightStream(Stream):
                 resp = response.json()[0]
                 if resp.get("code") == 200:
                     return resp
-                elif "#80000" in resp.get("body", ""):
+                if "#80000" in resp.get("body", ""):
                     self.logger.warning(
                         "Rate Limit Reached on individual request. Cooling for %s seconds. Attempt %s/%s",
                         sleep_time,
@@ -275,13 +278,13 @@ class AdsInsightStream(Stream):
                     raise RuntimeError(f"Individual request failed with non-retryable error: {resp}")
             except Exception as e:
                 self.logger.error(
-                    "Error during individual request retry: %s. Attempt %s/%s", e, attempt + 1, BACKOFF_MAX_RETRIES
+                    "Error during individual request retry: %s. Attempt %s/%s", e, attempt + 1, BACKOFF_MAX_RETRIES,
                 )
                 time.sleep(sleep_time)
                 sleep_time *= 2
                 attempt += 1
         raise RuntimeError("Max retries exceeded for individual request")
-    
+
     def get_records(
         self,
         context: dict | None,
@@ -303,12 +306,12 @@ class AdsInsightStream(Stream):
         report_start_consolidated = self._get_start_date(context)
         # Adjust start date using the sorting approach to find the earliest record.
         earliest_data_date = self._get_earliest_record_date(account_id, sync_end_date)
-        
+
         # If no data exists, exit early
         if earliest_data_date is None:
             self.logger.info("No data exists for this account in the specified date range. Exiting.")
             return
-            
+
         if earliest_data_date > report_start_consolidated:
             self.logger.info(
                 "Adjusting report start from %s to earliest available date %s.",
@@ -358,32 +361,32 @@ class AdsInsightStream(Stream):
             for final_date, batch_request, response in zip(batch_final_dates, batch_requests, batch_response.json()):
                 if response.get("code") == 200:
                     data = json.loads(response["body"])
+                # Handle rate limits, 500 errors, or other transient failures
+                elif "#80000" in response.get("body", ""):
+                    self.logger.warning(
+                        "Batch request for date %s failed due to rate limiting. Retrying individual request.",
+                        final_date.to_date_string(),
+                    )
+                    response = self._execute_single_request_with_retries(api, batch_request)
+                    data = json.loads(response["body"])
+                elif response.get("code") == 500:
+                    self.logger.warning(
+                        "Batch request for date %s failed with 500 error. Retrying individual request.",
+                        final_date.to_date_string(),
+                    )
+                    response = self._execute_single_request_with_retries(api, batch_request)
+                    data = json.loads(response["body"])
+                elif response.get("code") == 400 and "too many calls" in response.get("body", ""):
+                    self.logger.warning(
+                        "Batch request for date %s failed due to rate limiting. Retrying individual request.",
+                        final_date.to_date_string(),
+                    )
+                    response = self._execute_single_request_with_retries(api, batch_request)
+                    data = json.loads(response["body"])
                 else:
-                    # Handle rate limits, 500 errors, or other transient failures
-                    if "#80000" in response.get("body", ""):
-                        self.logger.warning(
-                            "Batch request for date %s failed due to rate limiting. Retrying individual request.",
-                            final_date.to_date_string(),
-                        )
-                        response = self._execute_single_request_with_retries(api, batch_request)
-                        data = json.loads(response["body"])
-                    elif response.get("code") == 500:
-                        self.logger.warning(
-                            "Batch request for date %s failed with 500 error. Retrying individual request.",
-                            final_date.to_date_string(),
-                        )
-                        response = self._execute_single_request_with_retries(api, batch_request)
-                        data = json.loads(response["body"])
-                    elif response.get("code") == 400 and "too many calls" in response.get("body", ""):
-                        self.logger.warning(
-                            "Batch request for date %s failed due to rate limiting. Retrying individual request.",
-                            final_date.to_date_string(),
-                        )
-                        response = self._execute_single_request_with_retries(api, batch_request)
-                        data = json.loads(response["body"])
-                    else:
-                        self.logger.warning(f"Batch request failed and will be skipped: {response}")
-                        data = {}
+                    msg = f"Batch request failed with non-retryable error: {response}"
+                    self.logger.error(msg)
+                    raise RuntimeError(msg)
                 if data.get("data") and len(data["data"]) > 0:
                     self.logger.info(
                         "%s records fetched for %s",
@@ -395,7 +398,7 @@ class AdsInsightStream(Stream):
                 else:
                     self.logger.info("No records fetched for %s", final_date.to_date_string())
                 report_start_consolidated = final_date
-                    
+
         self.logger.info("Syncing reports completed.")
 
     #Function to find the string between two strings or characters
@@ -412,8 +415,7 @@ class AdsInsightStream(Stream):
 
     #Function to check how close you are to the FB Rate Limit
     def get_limit(self, account_id)->float:
-        """
-        This function makes a GET request to the Facebook Graph API to retrieve
+        """This function makes a GET request to the Facebook Graph API to retrieve
         the usage limit for the Ads Insights endpoint and returns the maximum
         usage among the call count, CPU time, and total time.
 
@@ -423,12 +425,13 @@ class AdsInsightStream(Stream):
         try:
             # Make a GET request to the Facebook Graph API to retrieve the usage limit
             check = rq.get(
-                'https://graph.facebook.com/' +
+                "https://graph.facebook.com/" +
                 self.config["api_version"] +
-                '/act_' +
+                "/act_" +
                 account_id +
-                '/insights?access_token=' +
-                self.config["access_token"]
+                "/insights",
+                headers={"Authorization": f"Bearer {self.config['access_token']}"},
+                timeout=30,
             )
 
             # Check if the request was successful
@@ -446,9 +449,8 @@ class AdsInsightStream(Stream):
                 # Find the maximum usage among call count, CPU time, and total time
                 usage = max(call, cpu, total)
                 return usage
-            else:
-                self.logger.warning("No usage data found in the response headers.")
-                return 0.0  # Default value if no data is available
+            self.logger.warning("No usage data found in the response headers.")
+            return 0.0  # Default value if no data is available
 
         except rq.exceptions.RequestException as e:
             self.logger.error(f"Request to Facebook API failed: {e}")

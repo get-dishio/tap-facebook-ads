@@ -32,7 +32,7 @@ class AdAccountsStream(FacebookStream):
 
     @property
     def url_base(self) -> str:
-        version = self.config.get("api_version") or "v21.0"
+        version = self.config.get("api_version") or "v25.0"
         return f"https://graph.facebook.com/{version}/me"
 
 
@@ -115,11 +115,10 @@ class AdAccountsStream(FacebookStream):
         "io_number",
         "media_agency",
         "partner",
-        "salesforce_invoice_group_id",
-        "business_zip",
+     "business_zip",
         "tax_id",
         ]
-        
+
         return columns
 
     name = "adaccounts"
@@ -210,7 +209,7 @@ class AdAccountsStream(FacebookStream):
         Property("io_number", IntegerType),
         Property("media_agency", StringType),
         Property("partner", StringType),
-        Property("salesforce_invoice_group_id", StringType),
+
         Property("business_zip", StringType),
         Property("tax_id", StringType),
     ).to_dict()
@@ -218,7 +217,7 @@ class AdAccountsStream(FacebookStream):
     def post_process(
         self,
         row: dict,
-        context: dict | None = None,  # noqa: ARG002
+        context: dict | None = None,
     ) -> dict | None:
         row["amount_spent"] = int(row["amount_spent"]) if "amount_spent" in row else None
         row["balance"] = int(row["balance"]) if "balance" in row else None
@@ -231,7 +230,7 @@ class AdAccountsStream(FacebookStream):
         return row
 
     def get_records(self, context):
-        if self.selected == False and self.configured_location_ids:
+        if not self.selected and self.configured_location_ids:
             for account_id in self.configured_location_ids:
                 yield {"account_id": account_id}
         else:
@@ -239,8 +238,8 @@ class AdAccountsStream(FacebookStream):
 
     def get_url_params(
         self,
-        context: dict | None,  # noqa: ARG002
-        next_page_token: t.Any | None,  # noqa: ANN401
+        context: dict | None,
+        next_page_token: t.Any | None,
     ) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization.
 
@@ -254,23 +253,23 @@ class AdAccountsStream(FacebookStream):
         params: dict = {"limit": 25}
         if next_page_token is not None:
             params["after"] = next_page_token
-        
-        params["fields"] = f"{self.columns}"
-        
+
+        params["fields"] = ",".join(self.columns)
+
         return params
 
 
     def get_child_context(self, record, context):
         return {"account_id": record["account_id"]}
-    
+
 
     def _sync_children(self, child_context: dict | None) -> None:
         if not child_context:
             return
-        
+
         if self.configured_location_ids and child_context["account_id"] not in self.configured_location_ids:
             return
-        
+
         super()._sync_children(child_context)
 
 

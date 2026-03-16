@@ -12,7 +12,6 @@ from singer_sdk.typing import (
     StringType,
 )
 
-from tap_facebook.client import FacebookStream
 from tap_facebook.streams.base_streams import AccountLevelStream
 
 
@@ -48,7 +47,7 @@ class AdImages(AccountLevelStream):
     ]
 
     name = "adimages"
-    path = f"/adimages?fields={columns}"
+    path = "/adimages?fields=" + ",".join(columns)
     tap_stream_id = "images"
     replication_method = REPLICATION_INCREMENTAL
     replication_key = "id"

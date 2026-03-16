@@ -64,7 +64,7 @@ class CampaignStream(IncrementalFacebookStream):
     name = "campaigns"
     filter_entity = "campaign"
 
-    path = f"/campaigns?fields={columns}"
+    path = "/campaigns?fields=" + ",".join(columns)
     primary_keys = ["id", "updated_time"]  # noqa: RUF012
     tap_stream_id = "campaigns"
     replication_method = REPLICATION_INCREMENTAL
@@ -127,14 +127,13 @@ class CampaignStream(IncrementalFacebookStream):
         Property("ad_strategy_id", IntegerType),
         Property("lifetime_budget", StringType),
         Property("last_budget_toggling_time", StringType),
-        Property("daily_budget", IntegerType),
         Property("special_ad_category_country", ArrayType),
     ).to_dict()
 
     def post_process(
         self,
         row: dict,
-        context: dict | None,  # noqa: ARG002
+        context: dict | None,
     ) -> dict:
         daily_budget = row.get("daily_budget")
         row["daily_budget"] = int(daily_budget) if daily_budget is not None else None

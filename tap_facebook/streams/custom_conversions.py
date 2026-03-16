@@ -38,7 +38,7 @@ class CustomConversions(AccountLevelStream):
     ]
 
     name = "customconversions"
-    path = f"/customconversions?fields={columns}"
+    path = "/customconversions?fields=" + ",".join(columns)
     tap_stream_id = "customconversions"
     primary_keys = ["id"]  # noqa: RUF012
     replication_method = REPLICATION_INCREMENTAL

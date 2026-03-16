@@ -58,12 +58,19 @@ class TapFacebook(Tap):
     # add parameters you have in config.json
     config_jsonschema = th.PropertiesList(
         th.Property(
+            "access_token",
+            th.StringType,
+            required=True,
+            secret=True,
+            description="The token to authenticate against the Facebook Marketing API.",
+        ),
+        th.Property(
             "locations",
             th.ArrayType(
                 th.ObjectType(
                     th.Property("id", th.StringType, required=True),
                     th.Property("name", th.StringType, required=False),
-                )
+                ),
             ),
             description="List of location objects, each with an 'id' (required) and optional 'name'.",
             default=[],
@@ -72,7 +79,7 @@ class TapFacebook(Tap):
             "api_version",
             th.StringType,
             description="The API version to request data from.",
-            default="v21.0",
+            default="v25.0",
         ),
         th.Property(
             "insight_reports_list",
@@ -110,7 +117,7 @@ class TapFacebook(Tap):
                             "How to break down the result. "
                             "For more than one breakdown, only certain combinations are available: "
                             "See 'Combining Breakdowns' in the "
-                            "[Breakdowns page](https://developers.facebook.com/docs/marketing-api/insights/breakdowns). "  # noqa: E501
+                            "[Breakdowns page](https://developers.facebook.com/docs/marketing-api/insights/breakdowns). "
                             "The option impression_device cannot be used by itself"
                         ),
                         default=[],
@@ -170,7 +177,7 @@ class TapFacebook(Tap):
             ),
             description=(
                 "A list of insight report definitions. See the "
-                "[Ad Insights docs](https://developers.facebook.com/docs/marketing-api/reference/adgroup/insights) "  # noqa: E501
+                "[Ad Insights docs](https://developers.facebook.com/docs/marketing-api/reference/adgroup/insights) "
                 "for more details."
             ),
             default=[],
@@ -178,7 +185,7 @@ class TapFacebook(Tap):
         th.Property(
             "start_date",
             th.DateTimeType,
-            description="The earliest record date to sync",
+            description="The earliest record date to sync. If omitted, syncs from the oldest available data (up to 37 months).",
         ),
         th.Property(
             "end_date",

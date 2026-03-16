@@ -14,14 +14,14 @@ packages = [
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8"
-requests = "~=2.31.0"
-singer-sdk = ">=0.27,<0.36"
-facebook-business = "^21.0.0"
+python = ">=3.10"
+requests = "~=2.32.0"
+singer-sdk = ">=0.53,<0.54"
+facebook-business = "^25.0.0"
 
-[tool.poetry.dev-dependencies]
-pytest = ">=7.4.1"
-singer-sdk = {version = ">=0.27,<0.36", extras = ["testing"]}
+[tool.poetry.group.dev.dependencies]
+pytest = ">=9.0.0"
+singer-sdk = {version = ">=0.53,<0.54", extras = ["testing"]}
 
 [tool.isort]
 profile = "black"
@@ -29,7 +29,7 @@ multi_line_output = 3 # Vertical Hanging Indent
 src_paths = "tap_facebook"
 
 [build-system]
-requires = ["poetry-core==1.8.1", "poetry-dynamic-versioning==1.2.0"]
+requires = ["poetry-core>=2.0,<3.0", "poetry-dynamic-versioning>=1.10,<2.0"]
 build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry.scripts]
@@ -44,7 +44,7 @@ enable = true
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py310"
 
 [tool.ruff.lint]
 ignore = ["ANN101", "DJ", "PD", "D101", "D102"]

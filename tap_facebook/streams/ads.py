@@ -31,8 +31,6 @@ class AdsStream(IncrementalFacebookStream):
         "account_id",
         "adset_id",
         "campaign_id",
-        "bid_type",
-        "bid_info",
         "status",
         "updated_time",
         "created_time",
@@ -42,11 +40,9 @@ class AdsStream(IncrementalFacebookStream):
         "source_ad_id",
         "creative",
         "tracking_specs",
-        "conversion_specs",
         "recommendations",
         "configured_status",
         "conversion_domain",
-        "bid_amount",
     ]
 
     columns_remaining = ["adlabels"]  # noqa: RUF012
@@ -61,21 +57,9 @@ class AdsStream(IncrementalFacebookStream):
     replication_key = "updated_time"
 
     schema = PropertiesList(
-        Property("bid_type", StringType),
         Property("account_id", StringType),
         Property("campaign_id", StringType),
         Property("adset_id", StringType),
-        Property("bid_amount", IntegerType),
-        Property(
-            "bid_info",
-            ObjectType(
-                Property("CLICKS", IntegerType),
-                Property("ACTIONS", IntegerType),
-                Property("REACH", IntegerType),
-                Property("IMPRESSIONS", IntegerType),
-                Property("SOCIAL", IntegerType),
-            ),
-        ),
         Property("status", StringType),
         Property(
             "creative",
@@ -101,6 +85,7 @@ class AdsStream(IncrementalFacebookStream):
             ),
         ),
         Property("source_ad_id", StringType),
+        Property("conversion_domain", StringType),
         Property(
             "tracking_specs",
             ArrayType(
@@ -143,15 +128,6 @@ class AdsStream(IncrementalFacebookStream):
                     ),
                     Property("response", ArrayType(Property("items", StringType))),
                     Property("subtype", ArrayType(Property("items", StringType))),
-                ),
-            ),
-        ),
-        Property(
-            "conversion_specs",
-            ArrayType(
-                ObjectType(
-                    Property("action.type", ArrayType(StringType)),
-                    Property("conversion_id", ArrayType(StringType)),
                 ),
             ),
         ),

@@ -32,7 +32,7 @@ class AdAccountsStream(FacebookStream):
 
     @property
     def url_base(self) -> str:
-        version = self.config.get("api_version") or "v21.0"
+        version = self.config.get("api_version") or "v25.0"
         return f"https://graph.facebook.com/{version}/me"
 
 
@@ -115,8 +115,7 @@ class AdAccountsStream(FacebookStream):
         "io_number",
         "media_agency",
         "partner",
-        "salesforce_invoice_group_id",
-        "business_zip",
+     "business_zip",
         "tax_id",
         ]
         
@@ -210,7 +209,7 @@ class AdAccountsStream(FacebookStream):
         Property("io_number", IntegerType),
         Property("media_agency", StringType),
         Property("partner", StringType),
-        Property("salesforce_invoice_group_id", StringType),
+
         Property("business_zip", StringType),
         Property("tax_id", StringType),
     ).to_dict()

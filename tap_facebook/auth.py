@@ -38,13 +38,14 @@ class OAuth2Authenticator(APIAuthenticatorBase):
         self._config_file = config_file
         self._tap = stream._tap
 
-    @property
-    def auth_headers(self) -> dict:
+    def __call__(self, r):
+        """Attach auth headers to the request, refreshing the token if needed."""
         if not self.is_token_valid():
             self.update_access_token()
-        result = super().auth_headers
-        result["Authorization"] = f"Bearer {self._tap._config.get('access_token')}"
-        return result
+        self.auth_headers = {
+            "Authorization": f"Bearer {self._tap._config.get('access_token')}",
+        }
+        return super().__call__(r)
 
     @property
     def oauth_request_body(self) -> dict:

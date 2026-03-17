@@ -87,7 +87,7 @@ typing = "t"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN201", "D103", "S101", "PLR2004"]
-"tap_facebook/auth.py" = ["SLF001", "PLR2004", "PTH123"]  # OAuth needs _tap._config access, HotGlue convention
+"tap_facebook/auth.py" = ["SLF001", "PLR2004", "PTH123", "ANN204"]  # OAuth needs _tap._config access, HotGlue convention
 "tap_facebook/client.py" = ["PLC0415"]  # Lazy import to avoid circular dependency
 
 [tool.ruff.lint.pydocstyle]

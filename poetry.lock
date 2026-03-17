@@ -146,6 +146,18 @@ tests-mypy = ["mypy (>=1.6) ; platform_python_implementation == \"CPython\" and 
 tests-no-zope = ["attrs[tests-mypy]", "cloudpickle ; platform_python_implementation == \"CPython\"", "hypothesis", "pympler", "pytest (>=4.3.0)", "pytest-xdist[psutil]"]
 
 [[package]]
+name = "backoff"
+version = "2.2.1"
+description = "Function decoration for backoff and retry"
+optional = false
+python-versions = ">=3.7,<4.0"
+groups = ["main"]
+files = [
+    {file = "backoff-2.2.1-py3-none-any.whl", hash = "sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8"},
+    {file = "backoff-2.2.1.tar.gz", hash = "sha256:03f829f5bb1923180821643f8753b0502c3b682293992485b0eef2807afa5cba"},
+]
+
+[[package]]
 name = "backports-datetime-fromisoformat"
 version = "2.0.1"
 description = "Backport of Python 3.11's datetime.fromisoformat"
@@ -1709,5 +1721,5 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10"
-content-hash = "6b78acb5827a1a932a8be71ef22bdf2ca169b9a693f7a2097581c75ea2802f25"
+python-versions = ">=3.10,<4.0"
+content-hash = "8c8bbd1072bd4e9dbcf8a1a8fff55636891123ae52769377466b4ccc04f9b298"

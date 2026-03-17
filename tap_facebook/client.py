@@ -6,7 +6,6 @@ import typing as t
 from http import HTTPStatus
 from urllib.parse import urlparse
 
-from singer_sdk.authenticators import BearerTokenAuthenticator
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk.streams import RESTStream
@@ -32,16 +31,18 @@ class FacebookStream(RESTStream):
     tolerated_http_errors: list[int] = []  # noqa: RUF012
 
     @property
-    def authenticator(self) -> BearerTokenAuthenticator:
+    def authenticator(self):
         """Return a new authenticator object.
 
         Returns:
             An authenticator instance.
         """
-        return BearerTokenAuthenticator.create_for_stream(
-            self,
-            token=self.config["access_token"],
+        from tap_facebook.auth import OAuth2Authenticator
+
+        auth_endpoint = (
+            f"https://graph.facebook.com/{self.config['api_version']}/oauth/access_token"
         )
+        return OAuth2Authenticator(self, self.config, auth_endpoint=auth_endpoint)
 
     def get_next_page_token(
         self,

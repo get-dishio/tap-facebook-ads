@@ -53,6 +53,11 @@ DEFAULT_INSIGHT_REPORT = {
 class TapFacebook(Tap):
     """Singer tap for extracting data from the Facebook Marketing API."""
 
+    def __init__(self, config=None, **kwargs) -> None:
+        # Capture config file path for OAuth token write-back (HotGlue convention)
+        self.config_file = config[0] if isinstance(config, (list, tuple)) else config
+        super().__init__(config=config, **kwargs)
+
     name = "tap-facebook"
 
     # add parameters you have in config.json

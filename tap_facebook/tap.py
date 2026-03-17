@@ -60,7 +60,6 @@ class TapFacebook(Tap):
         th.Property(
             "access_token",
             th.StringType,
-            required=True,
             secret=True,
             description="The token to authenticate against the Facebook Marketing API.",
         ),

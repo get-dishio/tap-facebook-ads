@@ -4,6 +4,32 @@ All notable changes to `tap-facebook-ads` will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-03-17
+
+### Fixed — HotGlue Production Deployment
+- **OAuth2Authenticator ported from hotglue/tap-facebook**: Added `tap_facebook/auth.py` with token refresh via `fb_exchange_token` grant and config file write-back. Replaces `BearerTokenAuthenticator` which didn't support HotGlue's OAuth flow.
+- **`AttributeError: can't set attribute 'auth_headers'`**: singer-sdk v0.53 changed `auth_headers` from a property to a plain instance attribute. Moved token injection logic from `@property` override to `__call__()` method.
+- **`KeyError: 'access_token'`** during config validation: Removed `required=True` from `access_token` in config schema — HotGlue manages OAuth tokens externally and may not have them at validation time.
+- **`KeyError: 'access_token'`** at runtime: Tenants without OAuth credentials (`client_id`/`client_secret`) were triggering token refresh unnecessarily. Added `_can_refresh` guard — bearer-only configs now skip refresh and use the token as-is.
+- **`KeyError: 'expires_in'`** in token refresh response: `update_access_token()` assumed Facebook always returns `expires_in` in the token exchange response. Now handled as optional.
+- **`400 Bad Request` on token refresh**: Expired tokens can't be exchanged via `fb_exchange_token`. Refresh is now only attempted when `_can_refresh` is True and token is approaching expiry.
+- **`TypeError: unexpected keyword argument 'setup_mapper'`**: `TapFacebook.__init__` override used explicit params that didn't include singer-sdk v0.53's new `setup_mapper` kwarg. Changed to `**kwargs` for forward compatibility.
+
+### Added
+- `tap_facebook/auth.py` — OAuth2Authenticator with dual-mode support (bearer-only and full OAuth)
+- `backoff` as explicit dependency (used by auth.py retry logic)
+- `docs/troubleshooting-steps.md` — production debugging guide with HotGlue-specific patterns
+- `.claude/skills/python-dev.md` — separated Python tooling from Meltano skill
+- `docs/schema-changes-v25.md` — downstream impact assessment for field removals/renames
+
+### Changed
+- `tap.py` — Added `__init__` override to capture `config_file` path for OAuth token write-back (HotGlue convention)
+- `client.py` — Switched from `BearerTokenAuthenticator` to `OAuth2Authenticator`
+- Python version constraint changed from `>=3.10` to `>=3.10,<4.0` (required by `backoff`)
+- `.env.template` — Reduced to only the two actually-required env vars
+
+---
+
 ## [Unreleased] - 2026-03-16
 
 ### Fixed

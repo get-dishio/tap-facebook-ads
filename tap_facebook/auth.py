@@ -22,9 +22,12 @@ class EmptyResponseError(Exception):
 class OAuth2Authenticator(APIAuthenticatorBase):
     """Facebook OAuth2 authenticator with automatic token refresh.
 
-    Exchanges short-lived tokens for long-lived ones using the
-    fb_exchange_token grant type, and writes refreshed tokens back
-    to the config file on disk for persistence across runs.
+    Supports two modes:
+    1. Bearer token only: config has `access_token` but no OAuth credentials.
+       Uses the token as-is without refresh.
+    2. Full OAuth: config has `access_token`, `client_id`, `client_secret`,
+       and optionally `expires_at`. Refreshes the token via fb_exchange_token
+       grant and writes it back to config.json.
     """
 
     def __init__(
@@ -38,9 +41,17 @@ class OAuth2Authenticator(APIAuthenticatorBase):
         self._config_file = config_file
         self._tap = stream._tap
 
+    @property
+    def _can_refresh(self) -> bool:
+        """Check if OAuth credentials are present for token refresh."""
+        return bool(
+            self._tap._config.get("client_id")
+            and self._tap._config.get("client_secret")
+        )
+
     def __call__(self, r):
         """Attach auth headers to the request, refreshing the token if needed."""
-        if not self.is_token_valid():
+        if self._can_refresh and not self.is_token_valid():
             self.update_access_token()
         self.auth_headers = {
             "Authorization": f"Bearer {self._tap._config.get('access_token')}",
@@ -59,16 +70,19 @@ class OAuth2Authenticator(APIAuthenticatorBase):
 
     def is_token_valid(self) -> bool:
         access_token = self._tap._config.get("access_token")
-        now = round(datetime.now(tz=timezone.utc).timestamp())
-        expires_in = self._tap.config.get("expires_at")
-        if expires_in is not None:
-            expires_in = int(expires_in)
         if not access_token:
             return False
-        if not expires_in:
-            return False
+        # If no OAuth credentials, can't refresh — assume token is valid
+        if not self._can_refresh:
+            return True
+        expires_at = self._tap.config.get("expires_at")
+        if not expires_at:
+            # Has OAuth creds but no expiry — token might be long-lived, assume valid
+            return True
+        now = round(datetime.now(tz=timezone.utc).timestamp())
+        expires_at = int(expires_at)
         # Refresh 10 days before expiration in case tap doesn't run often
-        return not ((expires_in - now) < 864000)
+        return not ((expires_at - now) < 864000)
 
     @backoff.on_exception(
         backoff.expo,
@@ -93,10 +107,11 @@ class OAuth2Authenticator(APIAuthenticatorBase):
             raise RuntimeError(msg) from ex
 
         token_json = token_response.json()
-        self.access_token = token_json["access_token"]
         self._tap._config["access_token"] = token_json["access_token"]
-        now = round(datetime.now(tz=timezone.utc).timestamp())
-        self._tap._config["expires_at"] = int(token_json["expires_in"]) + now
+
+        if "expires_in" in token_json:
+            now = round(datetime.now(tz=timezone.utc).timestamp())
+            self._tap._config["expires_at"] = int(token_json["expires_in"]) + now
 
         if self._config_file:
             with open(self._config_file, "w") as outfile:

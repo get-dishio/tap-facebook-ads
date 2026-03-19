@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from singer_sdk.streams.core import REPLICATION_INCREMENTAL
 from singer_sdk.typing import (
     BooleanType,
@@ -193,3 +195,20 @@ class CreativeStream(AccountLevelStream):
         Property("product_set_id", StringType),
         Property("carousel_ad_link", StringType),
     ).to_dict()
+
+    def get_url_params(
+        self,
+        context: dict | None,
+        next_page_token: t.Any | None,
+    ) -> dict[str, t.Any]:
+        """Return URL params with a reduced page size for creatives.
+
+        Creative records contain large nested objects (asset_feed_spec,
+        object_story_spec) that can exceed Facebook's response size limit
+        on accounts with many creatives. Using limit=5 instead of the
+        default 25 prevents "Please reduce the amount of data" errors.
+        """
+        params: dict = {"limit": 5}
+        if next_page_token is not None:
+            params["after"] = next_page_token
+        return params

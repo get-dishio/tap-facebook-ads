@@ -72,7 +72,7 @@ class AdVideos(AccountLevelStream):
     ]
 
     name = "advideos"
-    path = f"/advideos?fields={columns}"
+    path = "/advideos?fields=" + ",".join(columns)
     tap_stream_id = "videos"
     replication_method = REPLICATION_INCREMENTAL
     replication_key = "id"

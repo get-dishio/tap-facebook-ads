@@ -32,7 +32,7 @@ class AdAccountsStream(FacebookStream):
 
     @property
     def url_base(self) -> str:
-        version = self.config.get("api_version") or "v21.0"
+        version = self.config.get("api_version") or "v25.0"
         return f"https://graph.facebook.com/{version}/me"
 
 
@@ -115,11 +115,10 @@ class AdAccountsStream(FacebookStream):
         "io_number",
         "media_agency",
         "partner",
-        "salesforce_invoice_group_id",
-        "business_zip",
+     "business_zip",
         "tax_id",
         ]
-        
+
         return columns
 
     name = "adaccounts"
@@ -210,7 +209,7 @@ class AdAccountsStream(FacebookStream):
         Property("io_number", IntegerType),
         Property("media_agency", StringType),
         Property("partner", StringType),
-        Property("salesforce_invoice_group_id", StringType),
+
         Property("business_zip", StringType),
         Property("tax_id", StringType),
     ).to_dict()
@@ -218,7 +217,7 @@ class AdAccountsStream(FacebookStream):
     def post_process(
         self,
         row: dict,
-        context: dict | None = None,  # noqa: ARG002
+        context: dict | None = None,
     ) -> dict | None:
         row["amount_spent"] = int(row["amount_spent"]) if "amount_spent" in row else None
         row["balance"] = int(row["balance"]) if "balance" in row else None
@@ -228,19 +227,33 @@ class AdAccountsStream(FacebookStream):
             else None
         )
         row["spend_cap"] = int(row["spend_cap"]) if "spend_cap" in row else None
+
+        self.logger.info(
+            "Post-processed ad account row: raw_id=%s raw_account_id=%s normalized_account_id=%s",
+            row.get("id"),
+            row.get("account_id"),
+            self._normalize_account_id(row.get("account_id"))
+            or self._normalize_account_id(row.get("id")),
+        )
+
         return row
 
     def get_records(self, context):
-        if self.selected == False and self.configured_location_ids:
+        if not self.selected and self.configured_location_ids:
+            self.logger.info(
+                "adaccounts stream not selected; emitting configured locations directly: %s",
+                self.configured_location_ids,
+            )
             for account_id in self.configured_location_ids:
-                yield {"account_id": account_id}
-        else:
-            yield from super().get_records(context)
+                yield {"account_id": account_id, "id": account_id}
+            return
+
+        yield from super().get_records(context)
 
     def get_url_params(
         self,
-        context: dict | None,  # noqa: ARG002
-        next_page_token: t.Any | None,  # noqa: ANN401
+        context: dict | None,
+        next_page_token: t.Any | None,
     ) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization.
 
@@ -254,41 +267,123 @@ class AdAccountsStream(FacebookStream):
         params: dict = {"limit": 25}
         if next_page_token is not None:
             params["after"] = next_page_token
-        
-        params["fields"] = f"{self.columns}"
-        
+
+        params["fields"] = ",".join(self.columns)
+
         return params
 
 
     def get_child_context(self, record, context):
-        return {"account_id": record["account_id"]}
-    
+        raw_account_id = record.get("account_id")
+        raw_id = record.get("id")
+
+        normalized_account_id = (
+            self._normalize_account_id(raw_account_id)
+            or self._normalize_account_id(raw_id)
+        )
+
+        child_context = {
+            "account_id": normalized_account_id,
+            "_raw_account_id": raw_account_id,
+            "_raw_id": raw_id,
+        }
+
+        self.logger.info(
+            "Built child context for ad account: raw_id=%s raw_account_id=%s normalized_account_id=%s",
+            raw_id,
+            raw_account_id,
+            normalized_account_id,
+        )
+
+        return child_context
+
 
     def _sync_children(self, child_context: dict | None) -> None:
         if not child_context:
+            self.logger.warning("Skipping child sync because child_context is empty")
             return
-        
-        if self.configured_location_ids and child_context["account_id"] not in self.configured_location_ids:
-            return
-        
-        super()._sync_children(child_context)
 
+        normalized_child_account_id = self._normalize_account_id(
+            child_context.get("account_id")
+        )
+
+        configured_ids = {
+            normalized
+            for normalized in (
+                self._normalize_account_id(value)
+                for value in self.configured_location_ids
+            )
+            if normalized
+        }
+
+        self.logger.info(
+            "Evaluating child sync: raw_id=%s raw_account_id=%s normalized_child_account_id=%s configured_ids=%s",
+            child_context.get("_raw_id"),
+            child_context.get("_raw_account_id"),
+            normalized_child_account_id,
+            sorted(configured_ids),
+        )
+
+        if configured_ids and normalized_child_account_id not in configured_ids:
+            self.logger.warning(
+                "Skipping child sync for ad account because normalized_child_account_id=%s not in configured_ids=%s "
+                "(raw_id=%s raw_account_id=%s)",
+                normalized_child_account_id,
+                sorted(configured_ids),
+                child_context.get("_raw_id"),
+                child_context.get("_raw_account_id"),
+            )
+            return
+
+        if not normalized_child_account_id:
+            self.logger.warning(
+                "Skipping child sync because no usable account_id was found "
+                "(raw_id=%s raw_account_id=%s)",
+                child_context.get("_raw_id"),
+                child_context.get("_raw_account_id"),
+            )
+            return
+
+        self.logger.info(
+            "Running child sync for normalized_child_account_id=%s",
+            normalized_child_account_id,
+        )
+
+        super()._sync_children(
+            {
+                **child_context,
+                "account_id": normalized_child_account_id,
+            },
+        )
+
+    @staticmethod
+    def _normalize_account_id(value: t.Any) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        if normalized.startswith("act_"):
+            normalized = normalized[4:]
+        return normalized or None
 
     @property
     def configured_location_ids(self) -> list[str]:
-        location_ids = []
+        location_ids: list[str] = []
         locations_config = self.config.get("locations")
+
         if locations_config:
-            # Support new format: list of dicts with "id" (and optional "name")
             if isinstance(locations_config, list):
                 for entry in locations_config:
                     if isinstance(entry, dict) and "id" in entry:
-                        location_ids.append(entry["id"])
+                        location_ids.append(str(entry["id"]))
                     elif isinstance(entry, str):
-                        # fallback: treat as id string
                         location_ids.append(entry)
             elif isinstance(locations_config, str):
-                # Support old format: comma-separated string
-                location_ids.extend([id.strip() for id in locations_config.split(",")])
-        location_ids = [id.replace("act_", "") for id in location_ids]
-        return location_ids
+                location_ids.extend([item.strip() for item in locations_config.split(",")])
+
+        normalized_ids: list[str] = []
+        for location_id in location_ids:
+            normalized = self._normalize_account_id(location_id)
+            if normalized and normalized not in normalized_ids:
+                normalized_ids.append(normalized)
+
+        return normalized_ids

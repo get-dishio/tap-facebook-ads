@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from singer_sdk.streams.core import REPLICATION_INCREMENTAL
 from singer_sdk.typing import (
     BooleanType,
@@ -45,14 +47,12 @@ class CreativeStream(AccountLevelStream):
         "dynamic_ad_voice",
         "effective_authorization_category",
         "effective_instagram_media_id",
-        "effective_instagram_story_id",
         "effective_object_story_id",
         "enable_direct_install",
         "image_hash",
         "image_url",
-        "instagram_actor_id",
+        "instagram_user_id",
         "instagram_permalink_url",
-        "instagram_story_id",
         "link_destination_display_url",
         "link_og_id",
         "link_url",
@@ -64,8 +64,6 @@ class CreativeStream(AccountLevelStream):
         "object_story_spec",
         "object_type",
         "object_url",
-        "page_link",
-        "page_message",
         "place_page_set_id",
         "platform_customizations",
         "playable_asset_id",
@@ -81,7 +79,7 @@ class CreativeStream(AccountLevelStream):
     ]
 
     name = "creatives"
-    path = f"/adcreatives?fields={columns}"
+    path = "/adcreatives?fields=" + ",".join(columns)
     tap_stream_id = "creatives"
     replication_method = REPLICATION_INCREMENTAL
     replication_key = "id"
@@ -107,14 +105,12 @@ class CreativeStream(AccountLevelStream):
         Property("dynamic_ad_voice", StringType),
         Property("effective_authorization_category", StringType),
         Property("effective_instagram_media_id", StringType),
-        Property("effective_instagram_story_id", StringType),
         Property("effective_object_story_id", StringType),
         Property("enable_direct_install", BooleanType),
         Property("image_hash", StringType),
         Property("image_url", StringType),
-        Property("instagram_actor_id", StringType),
+        Property("instagram_user_id", StringType),
         Property("instagram_permalink_url", StringType),
-        Property("instagram_story_id", StringType),
         Property("link_destination_display_url", StringType),
         Property("link_og_id", StringType),
         Property("link_url", StringType),
@@ -126,8 +122,6 @@ class CreativeStream(AccountLevelStream):
         Property("object_story_spec", ObjectType()),
         Property("object_type", StringType),
         Property("object_url", StringType),
-        Property("page_link", StringType),
-        Property("page_message", StringType),
         Property("place_page_set_id", IntegerType),
         Property("platform_customizations", StringType),
         Property("playable_asset_id", IntegerType),
@@ -201,3 +195,20 @@ class CreativeStream(AccountLevelStream):
         Property("product_set_id", StringType),
         Property("carousel_ad_link", StringType),
     ).to_dict()
+
+    def get_url_params(
+        self,
+        context: dict | None,
+        next_page_token: t.Any | None,
+    ) -> dict[str, t.Any]:
+        """Return URL params with a reduced page size for creatives.
+
+        Creative records contain large nested objects (asset_feed_spec,
+        object_story_spec) that can exceed Facebook's response size limit
+        on accounts with many creatives. Using limit=5 instead of the
+        default 25 prevents "Please reduce the amount of data" errors.
+        """
+        params: dict = {"limit": 5}
+        if next_page_token is not None:
+            params["after"] = next_page_token
+        return params

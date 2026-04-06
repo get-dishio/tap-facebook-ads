@@ -23,7 +23,7 @@ plugins:
     - name: locations
       kind: array
     - name: api_version
-      value: 'v16.0'
+      value: 'v25.0'
     config:
       insights_buffer_days: 7
 environments:

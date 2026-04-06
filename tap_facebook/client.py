@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import json
 import typing as t
 from http import HTTPStatus
 from urllib.parse import urlparse
 
-import pendulum
-from singer_sdk.authenticators import BearerTokenAuthenticator
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk.streams import RESTStream
@@ -34,22 +31,24 @@ class FacebookStream(RESTStream):
     tolerated_http_errors: list[int] = []  # noqa: RUF012
 
     @property
-    def authenticator(self) -> BearerTokenAuthenticator:
+    def authenticator(self):
         """Return a new authenticator object.
 
         Returns:
             An authenticator instance.
         """
-        return BearerTokenAuthenticator.create_for_stream(
-            self,
-            token=self.config["access_token"],
+        from tap_facebook.auth import OAuth2Authenticator
+
+        auth_endpoint = (
+            f"https://graph.facebook.com/{self.config['api_version']}/oauth/access_token"
         )
+        return OAuth2Authenticator(self, self.config, auth_endpoint=auth_endpoint)
 
     def get_next_page_token(
         self,
         response: requests.Response,
-        previous_token: t.Any | None,  # noqa: ARG002, ANN401
-    ) -> t.Any | None:  # noqa: ANN401
+        previous_token: t.Any | None,
+    ) -> t.Any | None:
         """Return a token for identifying next page or None if no more pages.
 
         Args:
@@ -70,8 +69,8 @@ class FacebookStream(RESTStream):
 
     def get_url_params(
         self,
-        context: dict | None,  # noqa: ARG002
-        next_page_token: t.Any | None,  # noqa: ANN401
+        context: dict | None,
+        next_page_token: t.Any | None,
     ) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization.
 
@@ -119,8 +118,7 @@ class FacebookStream(RESTStream):
             ):
                 raise RetriableAPIError(msg, response)
 
-            self.logger.warning(f"Skipping request due to client error: {msg}")
-            return
+            raise FatalAPIError(msg, response)
 
         if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
             msg = (

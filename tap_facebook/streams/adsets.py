@@ -93,7 +93,7 @@ class AdsetsStream(IncrementalFacebookStream):
     name = "adsets"
     filter_entity = "adset"
 
-    path = f"/adsets?fields={columns}"
+    path = "/adsets?fields=" + ",".join(columns)
     primary_keys = ["id", "updated_time"]  # noqa: RUF012
     replication_method = REPLICATION_INCREMENTAL
     replication_key = "updated_time"
@@ -218,13 +218,6 @@ class AdsetsStream(IncrementalFacebookStream):
                             Property("id", StringType),
                             Property("name", StringType),
                         ),
-                    ),
-                ),
-                Property(
-                    "geo_locations",
-                    ObjectType(
-                        Property("countries", ArrayType(StringType)),
-                        Property("location_types", ArrayType(StringType)),
                     ),
                 ),
                 Property("genders", ArrayType(IntegerType)),
